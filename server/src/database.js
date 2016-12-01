@@ -1,3 +1,4 @@
+//I Read the database section and performed the copy and paste anyway.
 // Data goes here.
 var initialData = {
   // The "user" collection. Contains all of the users in our Facebook system.
