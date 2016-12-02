@@ -1,24 +1,25 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "type": "object",
-  "properties": {
-    "userId": {
-      "type": "integer",
-      "id": "userId"
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "/",
+    "type": "object",
+    "properties": {
+        "userId": {
+            "id": "userId",
+            "type": "integer"
+        },
+        "location": {
+            "id": "location",
+            "type": "string"
+        },
+        "contents": {
+            "id": "contents",
+            "type": "string"
+        }
     },
-    "location": {
-      "type": "string",
-      "id": "location"
-    },
-    "contents": {
-      "type": "string",
-      "id": "contents"
-    }
-  },
-  "id": "/",
-  "required": [
-    "userId",
-    "location",
-    "contents"
-  ]
+    "additionalProperties": false,
+    "required": [
+        "userId",
+        "location",
+        "contents"
+    ]
 }
