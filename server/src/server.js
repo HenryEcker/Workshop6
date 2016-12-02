@@ -1,6 +1,7 @@
 var bodyParser = require('body-parser');
 var database = require('./database.js');
 var StatusUpdateSchema = require('./schemas/statusupdate.json');
+var CommentSchema = require('./schemas/comment.json');
 var readDocument = database.readDocument;
 var validate = require('express-jsonschema').validate;
 var writeDocument = database.writeDocument;
@@ -56,6 +57,7 @@ function getFeedItemSync(feedItemId) {
     // Resolve comment author.
     feedItem.comments.forEach((comment) => {
         comment.author = readDocument('users', comment.author);
+        comment.likeCounter = comment.likeCounter.map((id) => readDocument('users', id));
     });
     return feedItem;
 }
@@ -303,6 +305,65 @@ app.post('/search', function(req, res) {
         res.status(400).end();
     }
 });
+
+
+//Like Comment
+app.put('/feeditem/:feeditemid/comment/:commentidx/likelist/:userid', function(req, res) {
+    var fromUser = getUserIdFromToken(req.get('Authorization'));
+    var feedItemId = parseInt(req.params.feeditemid, 10);
+    var userId = parseInt(req.params.userid, 10);
+    var commentId = parseInt(req.params.commentidx, 10);
+    if (fromUser === userId) {
+        var feedItem = readDocument('feedItems', feedItemId);
+        var comment = feedItem.comments[commentId];
+        if (comment.likeCounter.indexOf(userId) === -1) {
+            comment.likeCounter.push(userId);
+            writeDocument('feedItems', feedItem);
+        }
+        comment.author = readDocument('users', comment.author);
+        comment.likeCounter.map((userId) => readDocument('users', userId));
+        res.send(comment);
+    } else {
+        res.status(401).end();
+    }
+});
+
+//Unlike a Comment
+app.delete('/feeditem/:feeditemid/comment/:commentidx/likelist/:userid', function(req, res) {
+    var fromUser = getUserIdFromToken(req.get('Authorization'));
+    var feedItemId = parseInt(req.params.feeditemid, 10);
+    var userId = parseInt(req.params.userid, 10);
+    var commentId = parseInt(req.params.commentidx, 10);
+    if (fromUser === userId) {
+        var feedItem = readDocument('feedItems', feedItemId);
+        var comment = feedItem.comments[commentId];
+        var likeIndex = comment.likeCounter.indexOf(userId);
+        if (likeIndex !== -1) {
+            comment.likeCounter.splice(likeIndex, 1);
+            writeDocument('feedItems', feedItem);
+        }
+        comment.author = readDocument('users', comment.author);
+        comment.likeCounter.map((userId) => readDocument('users', userId));
+        res.send(comment);
+    } else {
+        res.status(401).end();
+    }
+});
+
+// Add Comment To feeditem
+app.put('/feeditem/:feeditemid/comment/', validate({body: CommentSchema}), function(req, res) {
+    var fromUser = getUserIdFromToken(req.get('Authorization'));
+    if (fromUser === req.body.author) {
+        var feedItem = readDocument('feedItems', req.params.feeditemid);
+        feedItem.comments.push(req.body);
+        writeDocument('feedItems', feedItem);
+        res.send(getFeedItemSync(req.params.feeditemid));
+
+    } else {
+        res.status(401).end();
+    }
+});
+
 
 // Reset database.
 app.post('/resetdb', function(req, res) {
